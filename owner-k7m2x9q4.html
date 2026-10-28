@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>MASTERSALE™ Control Panel</title>
+<link rel="icon" type="image/png" href="assets/favicon-32.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="firebase-config.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:Nunito,system-ui,sans-serif}@media (max-width:640px){input,select,textarea{font-size:16px!important}} body{-webkit-tap-highlight-color:transparent}</style>
+</head>
+<body class="bg-[#0a0a0a] text-gray-100 min-h-screen font-sans antialiased">
+
+<div id="login" class="min-h-screen flex items-center justify-center p-4">
+  <form id="loginForm" class="w-full max-w-sm bg-[#121212] border border-[#262626] rounded-2xl p-6 space-y-4">
+    <img src="assets/logo-white.png" alt="MASTERSALE™" class="h-8 w-auto"/><p class="text-[11px] tracking-[0.25em] text-gray-400 font-bold">OWNER ACCESS</p>
+    <p id="lerr" class="text-sm text-red-400"></p>
+    <input id="em" type="email" required autocomplete="username" placeholder="Email" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/>
+    <input id="pw" type="password" required autocomplete="current-password" placeholder="Password" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/>
+    <button class="w-full py-3 rounded-xl bg-white text-black hover:bg-gray-200 font-bold">Continue</button>
+  </form>
+  <form id="otpForm" class="hidden w-full max-w-sm bg-[#121212] border border-[#262626] rounded-2xl p-6 space-y-4">
+    <h1 class="text-xl font-black">Check your email</h1>
+    <p id="oinfo" class="text-sm text-gray-400">Enter the 6-digit code we emailed to sales@mastersale.bd.</p>
+    <p id="oerr" class="text-sm text-red-400"></p>
+    <input id="code" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="••••••" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3 text-center text-2xl tracking-[0.4em] font-mono"/>
+    <button class="w-full py-3 rounded-xl bg-white text-black hover:bg-gray-200 font-bold">Verify &amp; enter</button>
+    <div class="flex justify-between text-xs text-gray-400"><button type="button" id="resend" class="py-2">Send a new code</button><button type="button" id="otpBack" class="py-2">Cancel</button></div>
+  </form>
+</div>
+
+<div id="app" class="hidden max-w-5xl mx-auto p-4">
+  <header class="flex items-center justify-between gap-3 mb-5">
+    <div class="flex items-center gap-3"><img src="assets/logo-white.png" alt="MASTERSALE™" class="h-7 w-auto"/><span class="text-xs tracking-[0.2em] text-gray-400 font-bold hidden sm:inline">CONTROL PANEL</span></div>
+    <button id="logout" class="text-xs text-gray-400 hover:text-white px-3 py-2">Log out</button>
+  </header>
+  <nav class="flex gap-2 mb-5">
+    <button data-tab="Products" class="tabBtn px-4 py-2.5 rounded-xl text-sm font-semibold">Products</button>
+    <button data-tab="Orders" class="tabBtn px-4 py-2.5 rounded-xl text-sm font-semibold">Orders <span id="newCount" class="ml-1 text-xs bg-pink-500 rounded-full px-1.5 hidden"></span></button>
+  <button data-tab="Gate" class="tabBtn px-4 py-2.5 rounded-xl text-sm font-semibold">Launch Gate</button></nav>
+
+  <section id="tabProducts">
+    <button id="newP" class="mb-4 px-5 py-3 rounded-xl bg-white text-black hover:bg-gray-200 font-bold text-sm">+ Add product</button>
+    <div id="plist" class="grid gap-3 sm:grid-cols-2"></div>
+  </section>
+  <section id="tabOrders" class="hidden"><div id="olist" class="space-y-3"></div></section>
+  <section id="tabGate" class="hidden max-w-md space-y-4">
+    <p class="text-sm text-gray-400">When ON, visitors see “Grand Launch Soon” and must enter the customer password to view products or order. Turn it OFF on launch day.</p>
+    <label class="flex items-center gap-2 text-sm"><input id="gOn" type="checkbox" class="w-5 h-5"/> Password gate is ON</label>
+    <input id="gPw" type="text" autocomplete="off" placeholder="New customer password (min 6). Empty = keep current" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/>
+    <button id="gSave" class="px-6 py-3 rounded-xl bg-white text-black font-bold text-sm">Save</button>
+    <p id="gMsg" class="text-sm text-gray-400"></p>
+  </section>
+</div>
+
+<div id="modal" class="hidden fixed inset-0 z-50 bg-black/80 p-3 overflow-y-auto">
+  <form id="pform" class="max-w-lg mx-auto my-4 bg-[#121212] border border-[#262626] rounded-2xl p-5 space-y-3 text-sm">
+    <h2 id="mtitle" class="text-lg font-bold">Product</h2>
+    <input type="hidden" id="pid"/>
+    <div class="flex items-center gap-3">
+      <img id="prev" class="w-24 h-24 object-contain bg-black/40 rounded-xl" alt=""/>
+      <label class="flex-1 text-center py-3 rounded-xl border border-dashed border-white/40 cursor-pointer text-gray-300">Choose photo
+        <input id="pimg" type="file" accept="image/*" class="hidden"/></label>
+    </div>
+    <input id="ptitle" required placeholder="Product name" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/>
+    <input id="pcat" list="cats" placeholder="Category (e.g. Audio)" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/><datalist id="cats"></datalist>
+    <div class="grid grid-cols-2 gap-3">
+      <input id="pprice" type="number" min="1" required placeholder="Price ৳" class="bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/>
+      <input id="pold" type="number" min="0" placeholder="Old price ৳ (optional)" class="bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/>
+    </div>
+    <input id="pbadge" placeholder="Badge (NEW, HOT, SALE…)" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"/>
+    <textarea id="pdesc" rows="3" placeholder="Short description" class="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl px-3 py-3"></textarea>
+    <label class="flex items-center gap-2"><input id="pactive" type="checkbox" checked class="w-5 h-5"/> Visible in store (untick when out of stock)</label>
+    <div class="flex gap-3 pt-2">
+      <button type="button" id="cancelP" class="flex-1 py-3 rounded-xl bg-[#262626]">Cancel</button>
+      <button id="saveP" class="flex-1 py-3 rounded-xl bg-white text-black font-bold">Save</button>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+const MS = window.MS_CONFIG || {}, C = MS.firebase, $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+if (!C || !C.apiKey || C.apiKey.startsWith("PASTE")) {
+  $("login").innerHTML = '<p class="p-6 text-center text-amber-300">Open <b>firebase-config.js</b> and paste your Firebase keys first (see setup steps).</p>';
+} else {
+  const V = "10.12.2", base = "https://www.gstatic.com/firebasejs/" + V + "/";
+  const { initializeApp } = await import(base + "firebase-app.js");
+  const A = await import(base + "firebase-auth.js");
+  const F = await import(base + "firebase-firestore.js");
+  const FN = await import(base + "firebase-functions.js");
+  const app = initializeApp(C), auth = A.getAuth(app), db = F.getFirestore(app), fn = FN.getFunctions(app, "asia-south1");
+  const call = (n, d) => FN.httpsCallable(fn, n)(d);
+  await A.setPersistence(auth, A.browserSessionPersistence);   // closing the tab logs you out
+
+  const show = st => {
+    $("login").classList.toggle("hidden", st === "app"); $("app").classList.toggle("hidden", st !== "app");
+    $("loginForm").classList.toggle("hidden", st !== "login"); $("otpForm").classList.toggle("hidden", st !== "otp");
+  };
+  const isVerified = async () => { try { await F.getDocs(F.query(F.collection(db, "orders"), F.limit(1))); return true; } catch { return false; } };
+  const enter = () => { show("app"); loadProducts(); loadOrders(); loadGate(); showTab("Products"); };
+  async function sendCode() {
+    $("oerr").textContent = "";
+    try { await call("sendAdminCode"); $("oinfo").textContent = "Code sent to " + MS.adminEmail + ". It expires in 10 minutes."; }
+    catch (e) { $("oerr").textContent = e.message; }
+  }
+  $("loginForm").onsubmit = async e => {
+    e.preventDefault(); $("lerr").textContent = "";
+    try {
+      const cr = await A.signInWithEmailAndPassword(auth, $("em").value.trim(), $("pw").value);
+      if (cr.user.email !== MS.adminEmail) { await A.signOut(auth); throw 0; }
+      $("pw").value = ""; show("otp"); sendCode();
+    } catch { $("lerr").textContent = "Wrong email or password."; }
+  };
+  $("otpForm").onsubmit = async e => {
+    e.preventDefault(); $("oerr").textContent = "";
+    try { await call("verifyAdminCode", { code: $("code").value.trim() }); $("code").value = ""; enter(); }
+    catch (err) { $("oerr").textContent = err.message; }
+  };
+  $("resend").onclick = sendCode;
+  $("otpBack").onclick = $("logout").onclick = () => A.signOut(auth);
+  A.onAuthStateChanged(auth, async u => {
+    if (!u || u.email !== MS.adminEmail) { if (u) A.signOut(auth); show("login"); return; }
+    if (await isVerified()) enter(); else show("otp");
+  });
+
+  // ---------- LAUNCH GATE ----------
+  async function loadGate() {
+    const s = await F.getDoc(F.doc(db, "settings", "gate"));
+    $("gOn").checked = s.exists() && s.data().enabled;
+    $("gMsg").textContent = s.exists() ? "" : "Gate not set up yet: type a password and tick ON.";
+  }
+  $("gSave").onclick = async () => {
+    $("gMsg").textContent = "Saving…";
+    try { await call("setGate", { enabled: $("gOn").checked, password: $("gPw").value.trim() }); $("gPw").value = ""; $("gMsg").textContent = "Saved ✓"; }
+    catch (e) { $("gMsg").textContent = e.message; }
+  };
+
+  function showTab(t) {
+    $("tabProducts").classList.toggle("hidden", t !== "Products"); $("tabOrders").classList.toggle("hidden", t !== "Orders"); $("tabGate").classList.toggle("hidden", t !== "Gate");
+    document.querySelectorAll(".tabBtn").forEach(b => b.className = "tabBtn px-4 py-2.5 rounded-xl text-sm font-semibold " + (b.dataset.tab === t ? "bg-white text-black" : "bg-[#121212] text-gray-400"));
+  }
+  document.querySelectorAll(".tabBtn").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+  // ---------- PRODUCTS ----------
+  let products = [], imgData = "";
+  async function loadProducts() {
+    const s = await F.getDocs(F.collection(db, "products"));
+    products = s.docs.map(d => d.data()).sort((a, b) => b.id - a.id);
+    $("cats").innerHTML = [...new Set(products.map(p => p.category))].map(c => `<option value="${esc(c)}">`).join("");
+    $("plist").innerHTML = products.map(p => `
+      <div class="flex gap-3 bg-[#121212] border border-[#262626] rounded-2xl p-3 ${p.active === false ? 'opacity-50' : ''}">
+        <img src="${esc(p.image)}" class="w-20 h-20 object-contain bg-black/40 rounded-xl" alt=""/>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-sm truncate">${esc(p.title)}</div>
+          <div class="text-xs text-gray-400">${esc(p.category)} · <span class="text-white font-mono">৳${p.price}</span>${p.active === false ? ' · hidden' : ''}</div>
+          <div class="flex gap-2 mt-2 text-xs">
+            <button data-act="edit" data-id="${p.id}" class="px-3 py-2 rounded-lg bg-white/10">Edit</button>
+            <button data-act="hide" data-id="${p.id}" class="px-3 py-2 rounded-lg bg-[#262626]">${p.active === false ? 'Show' : 'Hide'}</button>
+            <button data-act="del" data-id="${p.id}" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-300">Delete</button>
+          </div>
+        </div>
+      </div>`).join("") || '<p class="text-gray-500">No products yet. Tap “Add product”.</p>';
+  }
+  $("plist").onclick = async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const p = products.find(x => x.id == b.dataset.id), ref = F.doc(db, "products", String(p.id));
+    if (b.dataset.act === "edit") openForm(p);
+    if (b.dataset.act === "hide") { await F.updateDoc(ref, { active: p.active === false }); loadProducts(); }
+    if (b.dataset.act === "del" && confirm("Delete this product permanently?")) { await F.deleteDoc(ref); loadProducts(); }
+  };
+  function openForm(p) {
+    imgData = ""; $("mtitle").textContent = p ? "Edit product" : "New product";
+    $("pid").value = p?.id || ""; $("ptitle").value = p?.title || ""; $("pcat").value = p?.category || "";
+    $("pprice").value = p?.price || ""; $("pold").value = p && p.originalPrice > p.price ? p.originalPrice : "";
+    $("pbadge").value = p?.badge || ""; $("pdesc").value = p?.description || ""; $("pactive").checked = p?.active !== false;
+    $("prev").src = p?.image || ""; $("modal").classList.remove("hidden");
+  }
+  $("newP").onclick = () => openForm(null);
+  $("cancelP").onclick = () => $("modal").classList.add("hidden");
+
+  // Resize + compress photo in the browser (keeps the shop fast, no paid storage needed)
+  function shrink(file, max) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onerror = rej;
+      r.onload = () => { const im = new Image(); im.onerror = rej;
+        im.onload = () => { const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement("canvas");
+          c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+          c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL("image/webp", 0.8)); };
+        im.src = r.result; };
+      r.readAsDataURL(file);
+    });
+  }
+  $("pimg").onchange = async e => { const f = e.target.files[0]; if (!f) return;
+    imgData = await shrink(f, 640); if (imgData.length > 700000) imgData = await shrink(f, 420); $("prev").src = imgData; };
+
+  $("pform").onsubmit = async e => {
+    e.preventDefault();
+    const id = Number($("pid").value) || Date.now(), old = products.find(p => p.id === id), image = imgData || old?.image;
+    if (!image) return alert("Please choose a product photo.");
+    const price = Number($("pprice").value);
+    $("saveP").disabled = true; $("saveP").textContent = "Saving…";
+    try {
+      await F.setDoc(F.doc(db, "products", String(id)), {
+        id, title: $("ptitle").value.trim(), category: $("pcat").value.trim() || "General", price,
+        originalPrice: Number($("pold").value) || price, badge: $("pbadge").value.trim() || "NEW",
+        description: $("pdesc").value.trim(), image, active: $("pactive").checked,
+        rating: old?.rating ?? 5, reviews: old?.reviews ?? 0 });
+      $("modal").classList.add("hidden"); loadProducts();
+    } catch (err) { alert("Could not save: " + err.message); }
+    $("saveP").disabled = false; $("saveP").textContent = "Save";
+  };
+
+  // ---------- ORDERS ----------
+  const PAY = { bkash: "bKash", nagad: "Nagad", cod: "Cash on Delivery" };
+  const STATUS = ["new", "confirmed", "shipped", "delivered", "cancelled"];
+  async function loadOrders() {
+    const s = await F.getDocs(F.query(F.collection(db, "orders"), F.orderBy("createdAt", "desc"), F.limit(100)));
+    const n = s.docs.filter(d => d.data().status === "new").length;
+    $("newCount").textContent = n; $("newCount").classList.toggle("hidden", !n);
+    $("olist").innerHTML = s.docs.map(d => { const o = d.data();
+      return `<div class="bg-[#121212] border border-[#262626] rounded-2xl p-4 text-sm space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <div><span class="font-mono font-bold text-white">${esc(o.invoice)}</span>
+          <span class="text-xs text-gray-500 ml-2">${esc(o.createdAt?.toDate().toLocaleString())}</span></div>
+          <select data-id="${d.id}" class="st bg-[#0a0a0a] border border-[#262626] rounded-lg px-2 py-2 text-xs">
+            ${STATUS.map(x => `<option ${x === o.status ? "selected" : ""}>${x}</option>`).join("")}</select>
+        </div>
+        <div><b>${esc(o.name)}</b> · <a class="text-gray-300 underline" href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div>
+        <div class="text-gray-400">${esc(o.address)} <span class="text-xs">(${o.zone === "outside" ? "outside Dhaka" : "inside Dhaka"})</span></div>
+        <div class="text-gray-300">${(o.items || []).map(i => `${i.qty}× ${esc(i.title)}`).join("<br>")}</div>
+        <div class="flex justify-between border-t border-[#262626] pt-2">
+          <span>${PAY[o.payment] || esc(o.payment)}${o.trxId ? ` · TrxID <b class="font-mono">${esc(o.trxId)}</b>` : ""}</span>
+          <b class="font-mono text-white">৳${Number(o.total).toLocaleString()}</b></div></div>`; }).join("") || '<p class="text-gray-500">No orders yet.</p>';
+  }
+  $("olist").onchange = async e => { if (e.target.classList.contains("st")) { await F.updateDoc(F.doc(db, "orders", e.target.dataset.id), { status: e.target.value }); loadOrders(); } };
+}
+</script>
+</body></html>
