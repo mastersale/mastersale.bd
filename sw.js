@@ -7,7 +7,7 @@ self.addEventListener("fetch", e => {
   if (r.method !== "GET" || u.origin !== location.origin) return;
   if (r.mode === "navigate") {
     if (!/(index\.html|\/)$/.test(u.pathname)) return;           // only the store page
-    e.respondWith(fetch(r).then(x => { caches.open(V).then(c => c.put("index.html", x.clone())); return x; }).catch(() => caches.match("index.html")));
+    e.respondWith(fetch(r).then(x => { if (x.ok) caches.open(V).then(c => c.put("index.html", x.clone())); return x; }).catch(() => caches.match("index.html")));
     return;
   }
   if (u.pathname.includes("/assets/"))
