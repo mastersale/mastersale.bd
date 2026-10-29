@@ -1,22 +1,15 @@
-name = "shop"
+name = "mastersale-bd"
 compatibility_date = "2025-06-01"
 pages_build_output_dir = "public"
 
-# 1) Create the database:  npx wrangler d1 create shop-db
-#    then paste the database_id it prints below.
 [[d1_databases]]
 binding = "DB"
-database_name = "shop-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "mastersale-db"
+database_id = "d6fb5aaf-6dbc-421a-b6ea-db75fe0de084"
 
-# 2) Create the media bucket:  npx wrangler r2 bucket create shop-media
 [[r2_buckets]]
 binding = "MEDIA"
-bucket_name = "shop-media"
+bucket_name = "mastersale-media"
 
 [vars]
-# Change to "true" only when you switch SSLCommerz from test mode to real payments.
 SSLC_LIVE = "false"
-
-# Secrets (ADMIN_PASSWORD, SESSION_SECRET, SSLC_STORE_ID, SSLC_STORE_PASSWD)
-# are NOT stored here. See README.md.
