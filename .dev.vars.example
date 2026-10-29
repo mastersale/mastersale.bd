@@ -1,5 +1,0 @@
-# Copy to .dev.vars for local testing only. Never commit .dev.vars.
-ADMIN_PASSWORD=choose-a-long-password
-SESSION_SECRET=paste-a-random-string-of-40-or-more-characters
-# SSLC_STORE_ID=
-# SSLC_STORE_PASSWD=
